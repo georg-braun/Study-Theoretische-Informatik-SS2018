@@ -32,3 +32,35 @@ javac WhileNullParser.java
 // Ausführen des Parsers mit der Datei als Argument
 java WhileNullParser ex.xt
 ```
+
+Hier auch mal ein konkretes Beispiel.
+
+Die Datei ex.txt enthält:
+```
+PROG(in X1; out Y);
+var(H1, H2, H3, H4, H5, H6);
+H5 = H5 + 1;
+while H2 != X1 do begin
+H2 = H2 + 1;
+while H3 != X1 do begin
+H3 = H3 + 1;
+H1 = H1 + 1
+end;
+H3 = 0 end
+```
+Erzeugen und Ausführen des Parsers
+```
+PS E:\Studentenprojekte\TheoretischeInformatik\Praktikum\bin> javacc WhileNullGrammar.jj
+Java Compiler Compiler Version 5.0 (Parser Generator)
+(type "javacc" with no arguments for help)
+Reading from file WhileNullGrammar.jj . . .
+File "TokenMgrError.java" does not exist.  Will create one.
+File "ParseException.java" does not exist.  Will create one.
+File "Token.java" does not exist.  Will create one.
+File "SimpleCharStream.java" does not exist.  Will create one.
+Parser generated successfully.
+PS E:\Studentenprojekte\TheoretischeInformatik\Praktikum\bin> javac WhileNullParser.java
+PS E:\Studentenprojekte\TheoretischeInformatik\Praktikum\bin> java WhileNullParser ex.txt
+ExampleParser: Reading the file ex.txt ...
+Gültig
+```
