@@ -1,0 +1,11 @@
+PROG(in X1; out Y);
+var(H1, H2, H3, H4, H5, H6);
+H5 = H5 + 1;
+while H2 != X1 do begin
+H2 = H2 + 1;
+while H3 != X1 do begin
+H3 = H3 + 1;
+H1 = H1 + 1
+end;
+H3 = 0
+end;

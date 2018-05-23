@@ -1,0 +1,70 @@
+PARSER_BEGIN(WhileNullParser)
+public class WhileNullParser {
+	public static void main(String args[]) {
+		try {
+			WhileNullParser parser = new WhileNullParser(System.in);
+			System.out.println("Bitte Ausdruck eingeben.");
+			parser.program();
+			System.out.println("Programm ok");
+		} catch (Exception e) {
+			System.out.println("Kein gültiges Programm");
+		}
+	}
+	}
+PARSER_END(WhileNullParser)
+
+TOKEN :
+{
+	<IDENT: (["A"-"Z"]|["a"-"z"]|["0"-"9"]|["Ä"]|["Ö"]|["Ü"])+>
+}
+
+
+SKIP :
+{
+	" "
+	| "\t"
+	| "\n"
+	| "\r"
+}
+
+
+void program():
+{}
+{
+	<IDENT> "(" inputVars() ";" outputVars() ")" ";" vars() ";" statement()
+}
+void inputVars():
+{}
+{
+	"in" <IDENT> ("," <IDENT>)*
+}
+void outputVars():
+{}
+{
+	"out" <IDENT>
+}
+void vars():
+{}
+{
+	"var" "(" <IDENT> ("," <IDENT>)*")"
+}
+void condition():
+{}
+{
+	<IDENT> "!=" <IDENT>
+}
+void assignment():
+{}
+{
+	<IDENT> "=" ("0" | (<IDENT> "+" "1"))
+}
+void whileStmnt():
+{}
+{
+	"while" condition() "do" "begin" statement() "end"
+}
+void statement():
+{}
+{
+	(assignment() | whileStmnt()) (";" statement())?
+}

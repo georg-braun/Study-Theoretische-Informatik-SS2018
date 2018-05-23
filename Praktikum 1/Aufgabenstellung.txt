@@ -1,0 +1,14 @@
+
+Praktikumsaufgabe 1: Lexikalische Analyse von WHILE 0 mit javaCC
+
+
+[Y] Einrichtung von Javacc
+	- Javacc 5.0 herunterladen
+	- Pfad zur javacc in die Pfad Variable hinzufügen
+	
+	- Vorgehen:
+		JavaCC Analyse		javacc <textFile>
+		Kompiliern mit 		javac <classFile>
+		Ausführung			java ClassName   (keine Dateiendung!)
+	
+[ ] Definition von Token mit Regulären Ausdrücken

@@ -1,0 +1,33 @@
+PARSER_BEGIN(KennzeichenParser)
+public class KennzeichenParser {
+	public static void main(String args[]) {
+		try {
+			KennzeichenParser parser = new KennzeichenParser(System.in);
+			System.out.println("Bitte Werte eingeben.");
+			parser.Kennzeichen();
+			System.out.println("Kennzeichen ok");
+		} catch (Exception e) {
+			System.out.println("Eingabe nicht ok");
+		}
+	}
+	}
+PARSER_END(KennzeichenParser)
+
+TOKEN :
+{
+	<KENNZEICHEN: (["A"-"Z"]|["Ä"]|["Ö"]|["Ü"]){1,3}" - "(["A"-"Z"]){1,2}" "(["1"-"9"])(["0"-"9"]){0,3}>
+}
+
+SKIP :
+{
+	" "
+	| "\t"
+	| "\n"
+	| "\r"
+}
+
+void Kennzeichen() :
+{}
+{
+[ <KENNZEICHEN> ]
+}
