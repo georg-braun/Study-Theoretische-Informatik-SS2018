@@ -1,0 +1,113 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;}PARSER_BEGIN(WhileNullParser)
+public class WhileNullParser {
+
+  	public static void main(String args[]) {		
+		if(args.length == 0){
+		  	try {		  	  
+				System.out.println ("ExampleParser: Reading input ...");
+				WhileNullParser parser = new WhileNullParser(System.in);
+				parser.program();
+				System.out.println ("Gültig");
+			}
+			catch (Exception e) {
+			System.out.println("Kein gültiges Programm");
+			System.out.println(e.getMessage());
+			}
+		}
+		else if(args.length == 1){
+			System.out.println ("ExampleParser: Reading the file " + args[0] + " ..." );
+			try {	
+                WhileNullParser parser = new WhileNullParser(new java.io.FileInputStream(args[0]));
+				parser.program();
+				System.out.println ("Gültig");
+			}
+			catch(Exception e) {
+				System.out.println ("ExampleParser: The file " + args[0] + " was not found.");
+				return;
+			}
+		}
+		else {
+			System.out.println ("ExampleParser: You must use one of the following:");
+			System.out.println (" java ExampleParser < file");
+			System.out.println ("Or");
+			System.out.println (" java ExampleParser file");
+			return ;
+		}
+	}
+	
+	
+}
+PARSER_END(WhileNullParser)TOKEN :
+{
+	< IN : "in">
+	|
+	< NULL : "0">
+	|
+	< EINS : "1">
+	|
+	< DO : "do">
+	|
+	< END : "end">
+	|
+	< BEGIN : "begin">
+	|
+	< VAR : "var">
+	|
+	< OUT : "out">
+	|
+	< WHILE : "while">
+	|
+	<IDENT: (["A"-"Z"]|["a"-"z"]|["0"-"9"]|["Ä"]|["Ö"]|["Ü"])+>
+}
+
+
+SKIP :
+{
+	" "
+	| "\t"
+	| "\r"
+}
+
+
+void program():
+{}
+{
+	<IDENT> "(" inputVars() ";" outputVars() ")" ";" vars() ";" statement()
+}
+void inputVars():
+{}
+{
+	<IN> <IDENT> ("," <IDENT>)*
+}
+void outputVars():
+{}
+{
+	<OUT> <IDENT>
+}
+void vars():
+{}
+{
+	<VAR> "(" <IDENT> ("," <IDENT>)*")"
+}
+void condition():
+{}
+{
+	<IDENT> "!=" <IDENT>
+}
+void assignment():
+{}
+{
+	<IDENT> "=" (<NULL> | (<IDENT> "+" <EINS>))
+}
+void whileStmnt():
+{}
+{
+	<WHILE> condition() <DO> <BEGIN> statement() <END>
+}
+void statement():
+{}
+{
+	(assignment() | whileStmnt()) (";" statement())?
+}
