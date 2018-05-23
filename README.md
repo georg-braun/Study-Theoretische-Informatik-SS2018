@@ -1,7 +1,7 @@
 # Theoretische Informatik
 ## Praktikumsaufgaben im Rahmen des Modul Theoretische Informatik im SS18
 
-- [x] Entwicklung eines Parsers für WHILE0-Programme
+- [x] Entwicklung eines Parsers für WHILE0-Programme (Lexikalische- und Syntaktische-Analyse)
 - [ ] Compiler nach URM
 
 ### Benötigte Software
