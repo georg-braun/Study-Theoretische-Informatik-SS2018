@@ -8,6 +8,7 @@ public class WhileNullParser {
 			System.out.println("Programm ok");
 		} catch (Exception e) {
 			System.out.println("Kein gültiges Programm");
+			System.out.println(e.getMessage());
 		}
 	}
 	}
@@ -15,6 +16,24 @@ PARSER_END(WhileNullParser)
 
 TOKEN :
 {
+	< IN : "in">
+	|
+	< NULL : "0">
+	|
+	< EINS : "1">
+	|
+	< DO : "do">
+	|
+	< END : "end">
+	|
+	< BEGIN : "begin">
+	|
+	< VAR : "var">
+	|
+	< OUT : "out">
+	|
+	< WHILE : "while">
+	|
 	<IDENT: (["A"-"Z"]|["a"-"z"]|["0"-"9"]|["Ä"]|["Ö"]|["Ü"])+>
 }
 
@@ -36,17 +55,17 @@ void program():
 void inputVars():
 {}
 {
-	"in" <IDENT> ("," <IDENT>)*
+	<IN> <IDENT> ("," <IDENT>)*
 }
 void outputVars():
 {}
 {
-	"out" <IDENT>
+	<OUT> <IDENT>
 }
 void vars():
 {}
 {
-	"var" "(" <IDENT> ("," <IDENT>)*")"
+	<VAR> "(" <IDENT> ("," <IDENT>)*")"
 }
 void condition():
 {}
@@ -56,12 +75,12 @@ void condition():
 void assignment():
 {}
 {
-	<IDENT> "=" ("0" | (<IDENT> "+" "1"))
+	<IDENT> "=" (<NULL> | (<IDENT> "+" <EINS>))
 }
 void whileStmnt():
 {}
 {
-	"while" condition() "do" "begin" statement() "end"
+	<WHILE> condition() <DO> <BEGIN> statement() <END>
 }
 void statement():
 {}

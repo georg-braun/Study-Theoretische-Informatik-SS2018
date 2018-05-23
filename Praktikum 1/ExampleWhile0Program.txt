@@ -7,5 +7,6 @@ while H3 != X1 do begin
 H3 = H3 + 1;
 H1 = H1 + 1
 end;
-H3 = 0
-end;
+H3 = 0 end;
+
+PROG(in X1; out Y); var(H1); H1 = 0
