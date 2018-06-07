@@ -1,7 +1,15 @@
 /**
  * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
  */options{  static = true;}PARSER_BEGIN(WhileNullParser)
+import java.io.*;
+import java.util.*;
+import java.lang.*;
+import java.nio.file.*;
+import java.nio.charset.*;
+
 public class WhileNullParser {
+
+	public static Map<String, String> SymbolTable = new HashMap<String, String>();
 
   	public static void main(String args[]) {		
 		if(args.length == 0){
@@ -9,7 +17,11 @@ public class WhileNullParser {
 				System.out.println ("ExampleParser: Reading input ...");
 				WhileNullParser parser = new WhileNullParser(System.in);
 				parser.program();
+
+				
 				System.out.println ("Gültig");
+
+				
 			}
 			catch (Exception e) {
 				System.out.println(e.getMessage());
@@ -21,7 +33,9 @@ public class WhileNullParser {
 			try {	
                 WhileNullParser parser = new WhileNullParser(new java.io.FileInputStream(args[0]));
 				parser.program();
+				
 				System.out.println ("Gültig");
+				printUrm();
 			}
 			catch(Exception e) {
 				System.out.println(e.getMessage());
@@ -36,8 +50,137 @@ public class WhileNullParser {
 			return ;
 		}
 	}
+
+	/// ----------- Compiler Logik
+	// Programm-Name
+	private static String FProgramName;	
+
+	// Enthält das URM Programm
+	private static ArrayList<String > program = new ArrayList<String >(); 
+
+	// Übersetzung Variable - > Register
+	static int RegisterCounter = 2;
+	public static void AddIdent(Token token) {
+	  	String hVariableName = token.image;
+	  	
+		if (SymbolTable.containsKey(hVariableName)) {
+		  // Exception, duplicate
+		}
+		else {
+		  SymbolTable.put(hVariableName, "R"+RegisterCounter);
+		  RegisterCounter = RegisterCounter + 1;		  		  
+		}	
+	}
+
+	private static void AddOutIdent(Token token) throws ParseException
+	{
+		String name = token.image;
+
+		if(SymbolTable.containsKey(name))
+			throw new ParseException("Multiple out variables not allowed.");
+
+		SymbolTable.put(name, "R1");
+	}
+
 	
-	
+	private static String GetRegister(String variableName) throws ParseException {
+		if(!SymbolTable.containsKey(variableName))
+			throw new ParseException("Variable " + variableName + " nicht definiert.");
+
+		return SymbolTable.get(variableName);
+	}
+
+	private static String GetUnusedRegister() {
+		return String.format("R%d", RegisterCounter++);
+	}
+
+
+	//---- Übersetzung der syntaktischen Einheiten ----
+
+	// Rx = 0	
+	private static void createNullAssignment(Token token) throws ParseException
+	{
+		String register = GetRegister(token.image);
+
+		program.add(String.format("; %s = 0", token.image));
+		program.add(String.format("%s = 0", register));
+	}
+
+	// Rx = Ry++
+	private static void createIncrementAssignment(Token lToken, Token rToken) throws ParseException
+	{
+		program.add("; " + lToken.image + " = " + rToken.image + " + 1");
+
+		String l_reg = GetRegister(lToken.image);
+		String r_reg = GetRegister(rToken.image);
+		String h_reg = GetUnusedRegister();
+
+		createCopy(h_reg, r_reg);	
+		program.add(String.format("%s++", h_reg));
+		createCopy(l_reg, h_reg);// Ggf. noch kürzer machen indem ich direkt nach l_reg kopiere
+	}
+
+
+	// Helper
+	private static void createCopy(String xReg, String yReg) throws ParseException
+	{
+		String zReg = GetUnusedRegister();
+
+		// Nummer der ersten Programmzeile von copy
+		int base_line = getNextLineNumber();
+
+
+		program.add(String.format("%s = 0", xReg));
+		program.add(String.format("if %s == 0 goto %d", yReg, base_line + 5));
+		program.add(String.format("%s--", yReg));
+		program.add(String.format("%s++", zReg));
+		program.add(String.format("goto %d", base_line + 1));
+		program.add(String.format("if %s == 0 goto %d", zReg, base_line + 10));
+		program.add(String.format("%s--", zReg));
+		program.add(String.format("%s++", xReg));
+		program.add(String.format("%s++", yReg));
+		program.add(String.format("goto %d", base_line + 5));
+	}
+
+	private static int getNextLineNumber()
+	{
+		int line_number = 1;
+		for(String line : program)
+		{
+			if(line.startsWith(";"))
+				continue;
+			else
+				line_number++;
+		}
+		return line_number;
+	}
+
+	private static void CreateVarRegMapping()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("; ");
+		for(Map.Entry<String, String > entry : SymbolTable.entrySet())
+		{
+			sb.append(entry.getKey() + " -> " + entry.getValue() + ", ");
+		}
+		program.add(sb.toString());
+	}
+
+	// Ausgabe
+	public static void printUrm()
+	{
+		int line_number = 1;
+		for(String line : program)
+		{
+			if(line.startsWith(";"))
+				System.out.println(String.format("--: %s", line));
+			else
+				System.out.println(String.format("%02d: %s", line_number++, line));
+		}
+	}
+
+
 }
 PARSER_END(WhileNullParser)TOKEN :
 {
@@ -73,42 +216,68 @@ SKIP :
 
 
 void program():
-{}
 {
-	<IDENT> "(" inputVars() ";" outputVars() ")" ";" vars() ";" statement()
+	Token t;
+}
+{
+	t = <IDENT> { FProgramName = t.image; }
+	"(" inputVars() ";" outputVars() ")" ";" vars() ";" { CreateVarRegMapping(); } statement() 
 }
 void inputVars():
-{}
 {
-	<IN> <IDENT> ("," <IDENT>)*
+	Token t;
+}
+{
+	<IN> t = <IDENT> { AddIdent(t); } ("," t = <IDENT> { AddIdent(t); })*
 }
 void outputVars():
-{}
 {
-	<OUT> <IDENT>
+	Token t;
+}
+{
+	<OUT> t = <IDENT> { AddOutIdent(t); }
 }
 void vars():
-{}
 {
-	<VAR> "(" <IDENT> ("," <IDENT>)*")"
+	Token t;
 }
-void condition():
-{}
 {
-	<IDENT> "!=" <IDENT>
+	<VAR> "(" t = <IDENT> { AddIdent(t); } ("," t = <IDENT> { AddIdent(t); })*")"
 }
+
+
 void assignment():
-{}
 {
-	<IDENT> "=" (<NULL> | (<IDENT> "+" <EINS>))
+  Token tokLValue, tokRValue;
 }
+{
+	tokLValue=<IDENT>
+	"="
+	(
+	  	<NULL>	{ createNullAssignment(tokLValue);  }
+	|
+		(tokRValue = <IDENT>
+	  	"+"
+	  	<EINS>) { createIncrementAssignment(tokLValue, tokRValue);	}
+  	)
+
+}
+
+
 void whileStmnt():
 {}
 {
-	<WHILE> condition() <DO> <BEGIN> statement() <END>
+	<WHILE> <IDENT> "!=" <IDENT> <DO> <BEGIN> statement() <END>
 }
 void statement():
-{}
 {
-	(assignment() | whileStmnt()) (";" statement())?
+	
+}
+{
+	(assignment() {}
+		|
+	whileStmnt()
+	)
+
+	(";" statement())?
 }
