@@ -36,6 +36,7 @@ public class WhileNullParser {
 				
 				System.out.println ("Gültig");
 				printUrm();
+				writeUrm();
 			}
 			catch(Exception e) {
 				System.out.println(e.getMessage());
@@ -57,6 +58,9 @@ public class WhileNullParser {
 
 	// Enthält das URM Programm
 	private static ArrayList<String > program = new ArrayList<String >(); 
+
+	// Sprungmarken
+	private static Stack<AbstractMap.SimpleEntry<Integer, Integer > > while_replace = new Stack<AbstractMap.SimpleEntry<Integer, Integer > >();
 
 	// Übersetzung Variable - > Register
 	static int RegisterCounter = 2;
@@ -120,6 +124,43 @@ public class WhileNullParser {
 		createCopy(l_reg, h_reg);// Ggf. noch kürzer machen indem ich direkt nach l_reg kopiere
 	}
 
+	// WHILE
+	private static void createWhileBegin(Token lToken, Token rToken) throws ParseException
+	{
+		String l_copy_reg = GetUnusedRegister();
+		String r_copy_reg = GetUnusedRegister();
+
+		int copy_base_line = getNextLineNumber();
+		createCopy(l_copy_reg, GetRegister(lToken.image));
+		createCopy(r_copy_reg, GetRegister(rToken.image));
+
+		int compare_l_copy_reg = getNextLineNumber();
+		program.add(String.format("if %s == 0 goto %s", l_copy_reg, compare_l_copy_reg + 2));
+		program.add(String.format("goto %s", compare_l_copy_reg + 4));
+
+		while_replace.push(new AbstractMap.SimpleEntry<Integer, Integer >(program.size() , -1));
+		program.add(String.format("if %s == 0 goto <??>", r_copy_reg));   // go to end. end der Schleife ist noch unbekannt
+		program.add(String.format("goto %s", compare_l_copy_reg + 8));
+		program.add(String.format("if %s == 0 goto %s", r_copy_reg, compare_l_copy_reg + 8));
+		program.add(String.format("%s--", l_copy_reg));
+		program.add(String.format("%s--", r_copy_reg));
+		program.add(String.format("goto %d", compare_l_copy_reg));
+
+		while_replace.push(new AbstractMap.SimpleEntry<Integer, Integer >(-1 , copy_base_line));
+	}
+
+	private static void createWhileEnd() throws ParseException
+	{
+		AbstractMap.SimpleEntry<Integer, Integer> jump_to_copy = while_replace.pop();
+		AbstractMap.SimpleEntry<Integer, Integer> jump_to_end = while_replace.pop();
+
+		program.add(String.format("goto %d", jump_to_copy.getValue()));
+
+		int program_index = jump_to_end.getKey();
+		String program_line = program.get(program_index);
+		program_line = program_line.replace("<??>", String.format("%d", getNextLineNumber()));
+		program.set(program_index, program_line);
+	}
 
 	// Helper
 	private static void createCopy(String xReg, String yReg) throws ParseException
@@ -178,6 +219,14 @@ public class WhileNullParser {
 			else
 				System.out.println(String.format("%02d: %s", line_number++, line));
 		}
+	}
+
+	public static void writeUrm() throws IOException
+	{
+		OpenOption[] options = new OpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE };
+		Path file = Paths.get("", "urm", FProgramName + ".urm");
+		file = file.toAbsolutePath();
+		Files.write(file, program, Charset.forName("UTF-8"), options);
 	}
 
 
@@ -265,9 +314,11 @@ void assignment():
 
 
 void whileStmnt():
-{}
 {
-	<WHILE> <IDENT> "!=" <IDENT> <DO> <BEGIN> statement() <END>
+  Token tokLValue, tokRValue;
+}
+{
+	<WHILE> tokLValue = <IDENT> "!=" tokRValue = <IDENT> <DO> <BEGIN> { createWhileBegin(tokLValue, tokRValue); } statement() <END> { createWhileEnd(); }
 }
 void statement():
 {
