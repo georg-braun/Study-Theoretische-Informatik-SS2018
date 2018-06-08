@@ -7,6 +7,8 @@ import java.lang.*;
 import java.nio.file.*;
 import java.nio.charset.*;
 
+// Compiler-Part: https://github.com/albertkasdorf/TI-Praktikum
+
 public class WhileNullParser {
 
 	public static Map<String, String> SymbolTable = new HashMap<String, String>();
